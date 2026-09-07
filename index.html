@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>Ligne Abidjan</title>
+<title>Ligne Abidjan — abonnements car dans le Grand Abidjan</title>
 <meta name="description" content="Trouvez un car en abonnement mensuel pour votre trajet domicile-travail à Abidjan : horaires, arrêts, tarif et places disponibles. Contact direct avec le propriétaire.">
 <meta name="color-scheme" content="light">
 <link rel="manifest" href="manifest.webmanifest">
@@ -26,6 +26,7 @@
     --ink2:#69696E;
     --ink3:#A0A0A5;
     --sep:#EAEAEA;
+    --verif:#2FBF5B;      /* couleur du macaron « vérifié » */
     --fill:#F4F4F5;
     --r:28px;
   }
@@ -167,6 +168,11 @@
   .avail{font-size:15px;font-weight:700;color:#1E9C41}
   .avail.none{color:var(--red)}
   .jsub{font-size:12.5px;color:var(--ink3);margin-left:auto}
+  .verif{
+    width:1em;height:1em;color:var(--verif);flex:none;
+    vertical-align:-.13em;margin-left:.3em;
+  }
+  .mini-t .verif{width:17px;height:17px;vertical-align:-3px}
   .full-flag{
     display:inline-block;background:#FFE9E7;color:#D3271B;font-size:12px;
     font-weight:700;padding:4px 11px;border-radius:99px;
@@ -484,6 +490,14 @@
   .shlist button[aria-selected="true"]{color:var(--blue);font-weight:700;background:#EAF3FF}
   .shlist button .tick{margin-left:auto;flex:none;width:20px;height:20px;opacity:0}
   .shlist button[aria-selected="true"] .tick{opacity:1}
+  .shcherche{padding:0 20px 12px;flex:none}
+  .shcherche input{background:var(--fill);border:none;border-radius:14px;padding:12px 14px}
+  .shgrp{
+    font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;
+    letter-spacing:.04em;padding:14px 16px 6px;
+  }
+  .shvide{font-size:14px;color:var(--ink2);padding:12px 16px;line-height:1.5}
+  .shautre{color:var(--blue);font-weight:700}
   .shclose{
     margin:12px 20px 0;padding:15px;border-radius:20px;background:var(--fill);
     font-size:16px;font-weight:700;color:var(--ink);flex:none;
@@ -647,8 +661,21 @@
 
 <script>
 /* ============ données ============ */
-const COMMUNES = ["Abobo","Adjamé","Anyama","Attécoubé","Bingerville","Cocody","Koumassi",
-  "Marcory","Plateau","Port-Bouët","Songon","Treichville","Yopougon"];
+/* Lieux proposés, regroupés. La liste reste ouverte : « Autre lieu »
+   permet d'ajouter n'importe quel endroit qui n'y figure pas. */
+const LIEUX_GROUPES = [
+  {g:"Communes d'Abidjan", l:[
+    "Abobo","Adjamé","Attécoubé","Cocody","Koumassi","Marcory",
+    "Plateau","Port-Bouët","Treichville","Yopougon","Anyama","Bingerville","Songon"]},
+  {g:"Quartiers et zones", l:[
+    "Abobo Baoulé","Abobo Gare","Adjamé Liberté","Adjamé Renault","Akouédo","Angré",
+    "Attoban","Biétry","Blockhauss","Deux-Plateaux","Gonzagueville","Koumassi Remblais",
+    "Marcory Zone 4","Niangon","Palmeraie","Riviéra 2","Riviéra 3","Riviéra Bonoumin",
+    "Siporex","Vridi","Williamsville","Yopougon Gesco","Yopougon Selmer","Yopougon Toit Rouge"]},
+  {g:"Villes voisines", l:[
+    "Grand-Bassam","Bonoua","Dabou","Jacqueville","Alépé","Azaguié","Bingerville Adjin"]}
+];
+const COMMUNES = LIEUX_GROUPES.flatMap(x=>x.l);
 /* Coordonnées approximatives des lieux d'Abidjan, à affiner sur le terrain. */
 const LIEUX = {
   'abobo':[5.4167,-4.0167], 'adjame':[5.3600,-4.0230], 'anyama':[5.4944,-4.0517],
@@ -662,7 +689,15 @@ const LIEUX = {
   'yopougon gesco':[5.3650,-4.1000], 'gesco':[5.3650,-4.1000], 'niangon':[5.3300,-4.0900],
   'williamsville':[5.3550,-4.0180], 'zone 4':[5.2950,-3.9900], 'aeroport':[5.2610,-3.9270],
   'riviera palmeraie':[5.3600,-3.9400], 'grand bassam':[5.2000,-3.7400],
-  'abobo gare':[5.4200,-4.0200], 'adjame liberte':[5.3580,-4.0250]
+  'abobo gare':[5.4200,-4.0200], 'adjame liberte':[5.3580,-4.0250],
+  'abobo baoule':[5.4380,-4.0450], 'akouedo':[5.3400,-3.9350], 'attoban':[5.3620,-3.9900],
+  'bietry':[5.2870,-3.9830], 'blockhauss':[5.3050,-3.9930], 'gonzagueville':[5.2700,-3.9100],
+  'koumassi remblais':[5.2900,-3.9500], 'marcory zone 4':[5.2950,-3.9900],
+  'riviera 2':[5.3480,-3.9700], 'riviera bonoumin':[5.3700,-3.9450],
+  'yopougon selmer':[5.3480,-4.0800], 'yopougon toit rouge':[5.3350,-4.0750],
+  'grand bassam':[5.2000,-3.7400], 'bonoua':[5.2740,-3.5940], 'dabou':[5.3230,-4.3770],
+  'jacqueville':[5.2050,-4.4160], 'alepe':[5.5000,-3.6660], 'azaguie':[5.6270,-4.0870],
+  'bingerville adjin':[5.3620,-3.8600], 'palmeraie':[5.3600,-3.9400]
 };
 const cle = t => (t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
                   .replace(/[^a-z0-9]+/g,' ').trim();
@@ -940,7 +975,6 @@ function carte(t){
     + "\nContact : " + o.tel + " (" + o.nom + ")";
 
   const puces = [
-    t.verifie ? '<span class="chip ok">✓ Vérifié</span>' : '',
     t.clim ? '<span class="chip">❄ Climatisé</span>' : '',
     `<span class="chip">${esc(texteJours(t.jdebut, t.jfin, t.joff))}</span>`,
     froid ? '<span class="chip warn">Places à confirmer</span>' : ''
@@ -949,7 +983,8 @@ function carte(t){
   return `<article class="card${complet?' est-complet':''}">
     <div class="placard">
       <div class="ptop">
-        <h2>${esc(t.depart)}<span class="arrow">→</span>${esc(t.arrivee)}</h2>
+        <h2>${esc(t.depart)}<span class="arrow">→</span>${esc(t.arrivee)}${
+          t.verifie? ICO_VERIF : ''}</h2>
         <div class="ptag"><b>${fcfa(t.prix)}</b><span>F/mois</span></div>
       </div>
       <div class="ptimes">
@@ -1025,6 +1060,38 @@ function carte(t){
     </div>
   </article>`;
 }
+
+/* Dessine le macaron de vérification sur un canevas. */
+function macaronCanvas(c, cx, cy, taille, couleur){
+  const R = taille/2, r = R*0.836, N = 8;
+  c.save();
+  c.beginPath();
+  for(let i = 0; i <= N; i++){
+    const a0 = 2*Math.PI*i/N, a1 = 2*Math.PI*(i+0.5)/N;
+    const x0 = cx + R*Math.cos(a0), y0 = cy + R*Math.sin(a0);
+    if(i === 0) c.moveTo(x0, y0);
+    if(i === N) break;
+    const a2 = 2*Math.PI*(i+1)/N;
+    c.quadraticCurveTo(cx + r*Math.cos(a1), cy + r*Math.sin(a1),
+                       cx + R*Math.cos(a2), cy + R*Math.sin(a2));
+  }
+  c.closePath();
+  /* la coche est découpée dans le macaron, pas posée dessus */
+  const k = taille/24;
+  const co = [[5.46,12.40],[10.54,17.47],[18.54,8.83],[16.63,7.06],[10.46,13.73],[7.30,10.56]];
+  c.moveTo(cx + (co[0][0]-12)*k, cy + (co[0][1]-12)*k);
+  co.slice(1).forEach(([x,y])=>c.lineTo(cx + (x-12)*k, cy + (y-12)*k));
+  c.closePath();
+  c.fillStyle = couleur;
+  c.fill('evenodd');
+  c.restore();
+}
+
+/* Macaron de vérification : contour festonné à 8 lobes et coche blanche. */
+const ICO_VERIF = `<svg class="verif" viewBox="0 0 24 24" role="img" aria-label="Ligne vérifiée"
+  ><title>Ligne vérifiée</title><path fill="currentColor" fill-rule="evenodd"
+   d="M23.6 12.0 Q20.9 15.7 20.2 20.2 Q15.7 20.9 12.0 23.6 Q8.3 20.9 3.8 20.2 Q3.1 15.7 0.4 12.0 Q3.1 8.3 3.8 3.8 Q8.3 3.1 12.0 0.4 Q15.7 3.1 20.2 3.8 Q20.9 8.3 23.6 12.0 Z
+      M5.46 12.40 L10.54 17.47 L18.54 8.83 L16.63 7.06 L10.46 13.73 L7.30 10.56 Z"/></svg>`;
 
 /* combiné téléphone, dans l'esprit des icônes One UI */
 const ICO_TEL = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg>`;
@@ -1148,12 +1215,17 @@ async function imageDeCarte(t){
     c.fillStyle = '#0381FE'; c.fillText('  →  ', IX+w1, y);
     const w2 = c.measureText('  →  ').width;
     c.fillStyle = '#0A0A0A'; c.fillText(arr, IX+w1+w2, y);
+    if(t.verifie){
+      const bx = IX + w1 + w2 + c.measureText(arr).width + ts*0.34;
+      macaronCanvas(c, bx, y - ts*0.30, ts*0.52, '#2FBF5B');
+    }
     y += 76;
   } else {
     c.font = '700 56px '+SANS; c.fillText(dep, IX, y); y += 64;
     c.fillStyle = '#0381FE'; c.font = '700 46px '+SANS; c.fillText('→ ', IX, y);
     const wa = c.measureText('→ ').width;
     c.fillStyle = '#0A0A0A'; c.font = '700 56px '+SANS; c.fillText(arr, IX+wa, y);
+    if(t.verifie) macaronCanvas(c, IX+wa+c.measureText(arr).width+20, y-17, 30, '#2FBF5B');
     y += 72;
   }
 
@@ -1176,7 +1248,6 @@ async function imageDeCarte(t){
 
   /* étiquettes */
   const tags = [];
-  if(t.verifie) tags.push(['✓ Vérifié', '#E7F8EB', '#1E9C41']);
   if(t.clim)    tags.push(['❄ Climatisé', '#F4F4F5', '#69696E']);
   if(tags.length){
     y += 34; let tx = IX;
@@ -1265,7 +1336,9 @@ async function imageDeCarte(t){
 let filtre = {q:'',de:'',vers:'',libre:false,tri:'places'};
 
 function vueVisiteur(){
-  const opts = v => COMMUNES.map(c=>`<option ${c===v?'selected':''}>${c}</option>`).join('');
+  const opts = v => LIEUX_GROUPES.map(gr=>
+    `<optgroup label="${esc(gr.g)}">${gr.l.map(c=>
+      `<option ${c===v?'selected':''}>${esc(c)}</option>`).join('')}</optgroup>`).join('');
   let liste = db.routes.filter(t=>user(t.owner).statut==='actif' && t.actif!==false);
 
   if(filtre.q){
@@ -1383,7 +1456,7 @@ function vueProprio(){
     const libre = t.places-t.pris;
     return `<div class="mini">
       <div>
-        <div class="mini-t">${esc(t.depart)} → ${esc(t.arrivee)}</div>
+        <div class="mini-t">${esc(t.depart)} → ${esc(t.arrivee)}${t.verifie? ICO_VERIF : ''}</div>
         <div class="mini-s">${t.couleur? esc(t.couleur)+' · ':''}${t.plaque||'plaque manquante'} · ${fcfa(t.prix)} F/mois · ${libre} libre${libre>1?'s':''}${
           t.actif===false? ' · <b style="color:#FFC15E">en pause</b>':''}${
           (t.attente||[]).length? ' · '+t.attente.length+' en attente':''}</div>
@@ -1413,6 +1486,12 @@ function vueProprio(){
   const milieu = joursEntre(jd, jf).slice(1,-1);
   const sel = (liste, val) => liste.map(x=>
     `<option ${x===val?'selected':''}>${esc(x)}</option>`).join('');
+  /* départ et arrivée : liste groupée, plus une saisie libre */
+  const selLieu = val => LIEUX_GROUPES.map(gr=>
+      `<optgroup label="${esc(gr.g)}">${gr.l.map(x=>
+        `<option ${x===val?'selected':''}>${esc(x)}</option>`).join('')}</optgroup>`).join('')
+    + (val && !COMMUNES.includes(val) ? `<option selected>${esc(val)}</option>` : '')
+    + '<option value="__autre__">Autre lieu…</option>';
   const files = mine.filter(t=>(t.attente||[]).length).map(t=>`<div class="panel">
     <h3>Liste d'attente · ${esc(t.depart)} → ${esc(t.arrivee)}</h3>
     <p class="sub">Ces personnes veulent une place dès qu'il s'en libère une. Appelez-les en priorité.</p>
@@ -1499,10 +1578,10 @@ function vueProprio(){
         ? "Trajet demandé par "+pre.n+" personne"+(pre.n>1?'s':'')+". Complétez les horaires et le tarif."
         : "Il apparaît dans les recherches dès l'enregistrement."}</p>
     <div class="row">
-      <div class="field"><label for="n-de">Départ</label><select id="n-de">${sel(COMMUNES, dDe)}</select>
+      <div class="field"><label for="n-de">Départ</label><select id="n-de">${selLieu(dDe)}</select>
         <button type="button" class="pinbtn ${termDep?'ok':''}" data-pinterm="dep"
           style="margin-top:8px">${termDep? '✓ placé' : '⌖ placer précisément'}</button></div>
-      <div class="field"><label for="n-vers">Arrivée</label><select id="n-vers">${sel(COMMUNES, dVers)}</select>
+      <div class="field"><label for="n-vers">Arrivée</label><select id="n-vers">${selLieu(dVers)}</select>
         <button type="button" class="pinbtn ${termArr?'ok':''}" data-pinterm="arr"
           style="margin-top:8px">${termArr? '✓ placé' : '⌖ placer précisément'}</button></div>
     </div>
@@ -1712,7 +1791,7 @@ function vueAdmin(){
       <div><div class="mini-t">${t.couleur? `<span class="pastcol" style="background:${
           (couleurDe(t.couleur)||{}).h};border-color:${(couleurDe(t.couleur)||{}).b}"></span> `:''}${
           esc(t.plaque||'sans plaque')} ${t.verifie
-          ? '<span class="pill on">vérifié</span>' : '<span class="pill wait">à vérifier</span>'}</div>
+          ? ICO_VERIF : '<span class="pill wait">à vérifier</span>'}</div>
         <div class="mini-s">${esc(t.depart)} → ${esc(t.arrivee)} · chauffeur ${esc(chauffeurDe(t).nom)}</div></div></div>
       <button class="link calm" data-verif="${t.id}">${t.verifie? 'Retirer le badge':'Marquer vérifié'}</button>
     </div>`).join('')}
@@ -1784,16 +1863,39 @@ const TICK = `<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentC
 
 function ouvrirFeuille(sel, trig){
   const titre = (document.querySelector('label[for="'+sel.id+'"]')?.textContent || 'Choisir').trim();
+  const options = [...sel.options];
+  const long = options.length > 10;
+
   const back = document.createElement('div');
   back.className = 'shback';
   back.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(titre)}">
       <span class="grab" aria-hidden="true"></span>
       <h4>${esc(titre)}</h4>
-      <ul class="shlist">${[...sel.options].map((op,i)=>
-        `<li><button type="button" data-i="${i}" aria-selected="${op.selected}"
-           >${esc(op.textContent)}${TICK}</button></li>`).join('')}</ul>
+      ${long? `<div class="shcherche"><input type="search" id="sh-q"
+        placeholder="Rechercher un lieu…" autocomplete="off"></div>`:''}
+      <ul class="shlist" id="sh-l"></ul>
       <button class="shclose" type="button">Annuler</button>
     </div>`;
+
+  const liste = back.querySelector('#sh-l');
+  function peupler(q){
+    const cq = cle(q||'');
+    let html = '', groupe = null, vus = 0;
+    options.forEach((op,i)=>{
+      if(cq && !cle(op.textContent).includes(cq) && op.value !== '__autre__') return;
+      const g = op.parentElement && op.parentElement.tagName === 'OPTGROUP'
+        ? op.parentElement.label : null;
+      if(g && g !== groupe && !cq){ html += `<li class="shgrp">${esc(g)}</li>`; groupe = g; }
+      const spec = op.value === '__autre__';
+      html += `<li><button type="button" data-i="${i}" aria-selected="${op.selected}"
+        ${spec? 'class="shautre"':''}>${esc(op.textContent)}${spec? '':TICK}</button></li>`;
+      if(!spec) vus++;
+    });
+    if(cq && vus === 0) html = `<li class="shvide">Aucun lieu trouvé pour « ${esc(q)} ».<br>
+      Utilisez « Autre lieu… » pour l'ajouter.</li>` + html;
+    liste.innerHTML = html;
+    brancherChoix();
+  }
 
   const fermer = ()=>{
     back.remove();
@@ -1803,17 +1905,41 @@ function ouvrirFeuille(sel, trig){
   };
   back.onclick = e=>{ if(e.target === back) fermer(); };
   back.querySelector('.shclose').onclick = fermer;
-  back.querySelectorAll('.shlist button').forEach(b=>b.onclick = ()=>{
-    const v = sel.options[+b.dataset.i].value;
-    fermer();
-    if(v !== sel.value){
-      sel.value = v;
-      sel.dispatchEvent(new Event('change', {bubbles:true}));
-    }
-  });
+  function brancherChoix(){
+    liste.querySelectorAll('button').forEach(b=>b.onclick = ()=>{
+      const op = options[+b.dataset.i];
+      if(op.value === '__autre__'){
+        fermer();
+        ouvrirFormulaire({
+          titre:'Autre lieu',
+          sous:"Saisissez le nom du quartier, du carrefour ou de la ville. Il sera ajouté à ce trajet.",
+          action:'Utiliser ce lieu',
+          champs:[{id:'nom', label:'Nom du lieu', exemple:'Carrefour Gesco'}],
+          verifier:v=> v.nom.length < 3 ? 'Indiquez un nom d\'au moins 3 caractères.' : '',
+          valider:v=>{
+            const o = document.createElement('option');
+            o.textContent = v.nom; o.value = v.nom;
+            sel.insertBefore(o, sel.querySelector('[value="__autre__"]'));
+            sel.value = v.nom;
+            sel.dispatchEvent(new Event('change', {bubbles:true}));
+          }
+        });
+        return;
+      }
+      fermer();
+      if(op.value !== sel.value){
+        sel.value = op.value;
+        sel.dispatchEvent(new Event('change', {bubbles:true}));
+      }
+    });
+  }
   addEventListener('keydown', function esc2(e){
     if(e.key === 'Escape'){ fermer(); removeEventListener('keydown', esc2); }
   });
+
+  peupler('');
+  const q = back.querySelector('#sh-q');
+  if(q) q.oninput = e=>peupler(e.target.value);
 
   document.body.appendChild(back);
   document.body.style.overflow = 'hidden';
